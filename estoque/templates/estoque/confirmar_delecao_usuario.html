@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> body { font-family: 'Inter', sans-serif; background-color: #f4f7f9; } .container { max-width: 600px; } </style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center min-h-screen">
+
+    <div class="container w-full">
+        
+        <div class="bg-white p-8 rounded-lg shadow-lg border-t-4 border-red-500">
+            <h1 class="text-2xl font-bold text-red-600 mb-4 text-center">⚠️ Atenção!</h1>
+            
+            <p class="text-gray-700 text-center mb-6 text-lg">
+                Tem a certeza absoluta de que deseja apagar o utilizador <strong>{{ usuario.username }}</strong>?
+            </p>
+            
+            <p class="text-gray-500 text-center mb-8 text-sm">
+                Esta ação é irreversível e o funcionário perderá o acesso ao sistema imediatamente.
+            </p>
+
+            <form method="post" class="flex gap-4 justify-center">
+                {% csrf_token %}
+                
+                <a href="{% url 'listar_usuarios' %}" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg transition">
+                    Cancelar
+                </a>
+                
+                <button type="submit" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-md transition">
+                    Sim, Apagar Utilizador
+                </button>
+            </form>
+        </div>
+
+    </div>
+</body>
+</html>

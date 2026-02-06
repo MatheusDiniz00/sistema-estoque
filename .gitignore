@@ -1,0 +1,15 @@
+Ignorar ambiente virtual
+
+venv/ env/
+
+Ignorar arquivos compilados do Python
+
+pycache/ *.pyc
+
+Ignorar configurações do editor (opcional)
+
+.vscode/
+
+OBS: Não coloquei 'db.sqlite3' aqui para que seus dados sejam enviados para a loja.
+
+Se no futuro quiser parar de sincronizar os dados, adicione 'db.sqlite3' aqui.

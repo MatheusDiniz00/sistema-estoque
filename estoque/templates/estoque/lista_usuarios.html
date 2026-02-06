@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> body { font-family: 'Inter', sans-serif; background-color: #f4f7f9; } .container { max-width: 1000px; } </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="container mx-auto">
+        
+        <div class="mb-6 bg-white p-6 rounded-lg shadow-md flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-1">{{ titulo }}</h1>
+                <p class="text-gray-600">Funcionários com acesso ao sistema.</p>
+            </div>
+            <div class="flex gap-2">
+                <a href="{% url 'dashboard' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded transition">
+                    Voltar
+                </a>
+                <a href="{% url 'registrar_usuario' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                    + Novo Utilizador
+                </a>
+            </div>
+        </div>
+
+        {% if messages %}
+            <div class="mb-4 space-y-2">
+                {% for message in messages %}
+                    <div class="p-4 rounded {% if 'error' in message.tags %}bg-red-100 text-red-700 border-l-4 border-red-500{% else %}bg-green-100 text-green-700 border-l-4 border-green-500{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Utilizador</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acesso</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for usuario in usuarios %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ usuario.username }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ usuario.email|default:"-" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {% if usuario.is_active %}
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Ativo</span>
+                                {% else %}
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if usuario.is_superuser %}Admin{% else %}Funcionário{% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-3">
+                                <a href="{% url 'editar_usuario' usuario.pk %}" class="text-indigo-600 hover:text-indigo-900 font-bold">
+                                    Editar
+                                </a>
+                                <!-- Não mostrar botão de apagar para o próprio utilizador logado -->
+                                {% if usuario.pk != user.pk %}
+                                    <a href="{% url 'deletar_usuario' usuario.pk %}" class="text-red-600 hover:text-red-900 font-bold">
+                                        Apagar
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-400 cursor-not-allowed" title="Não pode apagar-se a si mesmo">Apagar</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</body>
+</html>
