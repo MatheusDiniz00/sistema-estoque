@@ -57,9 +57,21 @@ class MovimentacaoForm(forms.ModelForm):
         model = Movimentacao
         fields = ['peca', 'tipo', 'quantidade_movimentada', 'fornecedor', 'observacao']
         widgets = {
-            'peca': forms.Select(attrs={'class': 'form-select'}),
-            'tipo': forms.Select(attrs={'class': 'form-select'}),
-            'quantidade_movimentada': forms.NumberInput(attrs={'class': 'form-input', 'min': 1}),
-            'fornecedor': forms.Select(attrs={'class': 'form-select'}),
-            'observacao': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3}),
+            'peca': forms.Select(attrs={
+                'class': 'select2 form-select'
+            }),
+            'tipo': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'quantidade_movimentada': forms.NumberInput(attrs={
+                'class': 'form-input',
+                'min': 1
+            }),
+            'fornecedor': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'observacao': forms.Textarea(attrs={
+                'class': 'form-textarea',
+                'rows': 3
+            }),
         }
