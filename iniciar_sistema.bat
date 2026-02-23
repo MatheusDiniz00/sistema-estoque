@@ -15,7 +15,7 @@ call venv\Scripts\activate
 
 :: 3. Abre o navegador automaticamente após 3 segundos
 timeout /t 3 >nul
-start http://127.0.0.1:8000/
+start msedge --app=http://127.0.0.1:8000/
 
 :: 4. Inicia o servidor Django
 python manage.py runserver

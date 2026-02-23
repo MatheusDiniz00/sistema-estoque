@@ -26,7 +26,7 @@ class Fornecedor(models.Model):
         return self.nome
 
 class Peca(models.Model):
-    nome = models.CharField(max_length=100, unique=True, verbose_name="Nome da Peça")
+    nome = models.CharField(max_length=100, verbose_name="Nome da Peça")
     # Novo Campo de Categoria
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Categoria")
     
@@ -39,6 +39,7 @@ class Peca(models.Model):
     class Meta:
         verbose_name = "Peça"
         verbose_name_plural = "Peças"
+        unique_together = ['nome', 'modelo_celular']
     
     def __str__(self):
         return f"{self.nome} ({self.modelo_celular})"
