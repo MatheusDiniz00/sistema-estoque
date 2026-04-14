@@ -18,6 +18,6 @@ timeout /t 3 >nul
 start msedge --app=http://127.0.0.1:8000/
 
 :: 4. Inicia o servidor Django
-python manage.py runserver
+python manage.py runserver 0.0.0.0:8000
 
 pause

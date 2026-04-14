@@ -3,11 +3,12 @@ from .models import Peca, Movimentacao, Fornecedor, Categoria
 from .forms import PecaForm, MovimentacaoForm, FornecedorForm, UsuarioForm, CategoriaForm
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Q, Sum, F
+from django.db.models import Q, Case, Sum, F, When
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
+from django.db.models import Case, When, Value, IntegerField
 
 # --- Gestão de Usuários ---
 @login_required
@@ -152,19 +153,96 @@ def dashboard(request):
 def listar_pecas(request):
     query = request.GET.get('q')
     categoria_id = request.GET.get('categoria')
-    pecas = Peca.objects.all().order_by('nome')
+    modelo = request.GET.get('modelo')
+    ordenar = request.GET.get('ordenar')  # 👈 NOVO
+
+    if ordenar == 'iphone_ordem':
+        pecas = pecas.annotate(
+            ordem_personalizada=Case(
+
+                # Linha antiga
+                When(modelo_celular__iexact='Apple iPhone 8', then=Value(0)),
+                When(modelo_celular__iexact='Apple iPhone 8 Plus', then=Value(1)),
+                When(modelo_celular__iexact='Apple iPhone X', then=Value(2)),
+                When(modelo_celular__iexact='Apple iPhone XR', then=Value(3)),
+                When(modelo_celular__iexact='Apple iPhone XS', then=Value(4)),
+                When(modelo_celular__iexact='Apple iPhone XS Max', then=Value(5)),
+
+                # Linha 11
+                When(modelo_celular__iexact='Apple iPhone 11', then=Value(6)),
+                When(modelo_celular__iexact='Apple iPhone 11 Pro', then=Value(7)),
+                When(modelo_celular__iexact='Apple iPhone 11 Pro Max', then=Value(8)),
+
+                # Linha 12
+                When(modelo_celular__iexact='Apple iPhone 12 Mini', then=Value(9)),
+                When(modelo_celular__iexact='Apple iPhone 12', then=Value(10)),
+                When(modelo_celular__iexact='Apple iPhone 12 Pro', then=Value(11)),
+                When(modelo_celular__iexact='Apple iPhone 12 Pro Max', then=Value(12)),
+
+                # Linha 13
+                When(modelo_celular__iexact='Apple iPhone 13 Mini', then=Value(13)),
+                When(modelo_celular__iexact='Apple iPhone 13', then=Value(14)),
+                When(modelo_celular__iexact='Apple iPhone 13 Pro', then=Value(15)),
+                When(modelo_celular__iexact='Apple iPhone 13 Pro Max', then=Value(16)),
+
+                # Linha 14
+                When(modelo_celular__iexact='Apple iPhone 14', then=Value(17)),
+                When(modelo_celular__iexact='Apple iPhone 14 Plus', then=Value(18)),
+                When(modelo_celular__iexact='Apple iPhone 14 Pro', then=Value(19)),
+                When(modelo_celular__iexact='Apple iPhone 14 Pro Max', then=Value(20)),
+
+                # Linha 15
+                When(modelo_celular__iexact='Apple iPhone 15', then=Value(21)),
+                When(modelo_celular__iexact='Apple iPhone 15 Plus', then=Value(22)),
+                When(modelo_celular__iexact='Apple iPhone 15 Pro', then=Value(23)),
+                When(modelo_celular__iexact='Apple iPhone 15 Pro Max', then=Value(24)),
+
+                # Linha 16
+                When(modelo_celular__iexact='Apple iPhone 16', then=Value(25)),
+                When(modelo_celular__iexact='Apple iPhone 16 Plus', then=Value(26)),
+                When(modelo_celular__iexact='Apple iPhone 16 Pro', then=Value(27)),
+                When(modelo_celular__iexact='Apple iPhone 16 Pro Max', then=Value(28)),
+
+                # Linha 17
+                When(modelo_celular__iexact='Apple iPhone 17', then=Value(29)),
+                When(modelo_celular__iexact='Apple iPhone 17 Plus', then=Value(30)),
+                When(modelo_celular__iexact='Apple iPhone 17 Pro', then=Value(31)),
+                When(modelo_celular__iexact='Apple iPhone 17 Pro Max', then=Value(32)),
+
+                default=Value(999),
+                output_field=IntegerField()
+            )
+        ).order_by('ordem_personalizada', 'nome')
+
+    pecas = Peca.objects.all()
+
     if query:
         pecas = pecas.filter(Q(nome__icontains=query) | Q(modelo_celular__icontains=query))
+
     if categoria_id:
         pecas = pecas.filter(categoria_id=categoria_id)
+
+    if modelo:
+        pecas = pecas.filter(modelo_celular__icontains=modelo)
+
+    # 🔥 AQUI entra a ordenação
+    if ordenar == 'modelo':
+        pecas = pecas.order_by('modelo_celular')
+    else:
+        pecas = pecas.order_by('nome')  # padrão
+
     categorias = Categoria.objects.all()
+
     contexto = {
         'titulo': 'Controle de Estoque de Peças', 
         'pecas': pecas, 
         'query': query,
+        'modelo_ativo': modelo,
         'categorias': categorias,
-        'filtro_ativo': int(categoria_id) if categoria_id else None
+        'filtro_ativo': int(categoria_id) if categoria_id else None,
+        'ordenar': ordenar  # 👈 opcional (pra UI)
     }
+
     return render(request, 'estoque/lista_pecas.html', contexto)
 
 @login_required
@@ -194,31 +272,58 @@ def editar_peca(request, pk):
     contexto = {'titulo': f'Editar: {peca.nome}', 'form': form, 'peca': peca}
     return render(request, 'estoque/editar_peca.html', contexto)
 
+
+@login_required
+def deletar_peca(request, pk):
+    peca = get_object_or_404(Peca, pk=pk)
+
+    peca.delete()
+    messages.success(request, 'Peça excluída com sucesso!')
+    
+    return redirect('lista_pecas')
+
+@login_required
+@transaction.atomic
 @login_required
 @transaction.atomic
 def movimentar_estoque(request):
+    peca_id = request.GET.get('peca')
+    tipo = request.GET.get('tipo')
+
     if request.method == 'POST':
         form = MovimentacaoForm(request.POST)
         if form.is_valid():
             movimentacao = form.save(commit=False)
             peca = movimentacao.peca
             quantidade = movimentacao.quantidade_movimentada
+
             if movimentacao.tipo == 'ENTRADA':
                 peca.quantidade += quantidade
                 messages.success(request, f'{quantidade}x de {peca.nome} adicionados ao estoque.')
+
             elif movimentacao.tipo == 'SAIDA':
                 if peca.quantidade < quantidade:
-                    messages.error(request, f'Erro: Não há {quantidade}x de {peca.nome} em estoque. Quantidade atual: {peca.quantidade}.')
+                    messages.error(request, f'Erro: Não há {quantidade}x de {peca.nome} em estoque.')
                     return redirect('movimentar_estoque')
+
                 peca.quantidade -= quantidade
                 messages.success(request, f'{quantidade}x de {peca.nome} removidos do estoque.')
 
             peca.save()
             movimentacao.save()
-            # MUDANÇA AQUI: Redireciona para o dashboard após sucesso
             return redirect('dashboard')
+
     else:
-        form = MovimentacaoForm()
+        initial = {}
+
+        if peca_id:
+            initial['peca'] = peca_id
+
+        if tipo:
+            initial['tipo'] = tipo
+
+        form = MovimentacaoForm(initial=initial)
+
     contexto = {'titulo': 'Movimentação de Estoque', 'form': form}
     return render(request, 'estoque/movimentar_peca.html', contexto)
 

@@ -61,6 +61,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data/Hora</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Peça</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Modelo do Celular</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoria</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantidade</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Observação</th>
                     </tr>
@@ -77,6 +78,9 @@
                             <td class="px-6 py-4 text-sm text-gray-800">
                                 {{ mov.peca.modelo_celular }}
                             </td>
+                            <td class="px-6 py-4 text-sm text-gray-800">
+                                {{ mov.peca.categoria }}
+                            </td>
                             <td class="px-6 py-4 text-sm text-red-600 font-bold">
                                 -{{ mov.quantidade_movimentada }}
                             </td>
@@ -86,7 +90,7 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-gray-500 italic">
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500 italic">
                                 Nenhuma saída registrada neste período.
                             </td>
                         </tr>
