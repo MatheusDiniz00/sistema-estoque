@@ -3,7 +3,7 @@ from .models import Peca, Movimentacao, Fornecedor, Categoria
 from .forms import PecaForm, MovimentacaoForm, FornecedorForm, UsuarioForm, CategoriaForm
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Q, Case, Sum, F, When
+from django.db.models import Q, Case, Sum, F, When, DecimalField, ExpressionWrapper
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -306,6 +306,9 @@ def movimentar_estoque(request):
                     messages.error(request, f'Erro: Não há {quantidade}x de {peca.nome} em estoque.')
                     return redirect('movimentar_estoque')
 
+                if not movimentacao.preco_venda_no_momento:
+                    movimentacao.preco_venda_no_momento = peca.preco_venda
+
                 peca.quantidade -= quantidade
                 messages.success(request, f'{quantidade}x de {peca.nome} removidos do estoque.')
 
@@ -329,23 +332,79 @@ def movimentar_estoque(request):
 
 @login_required
 def relatorio_movimentacoes(request):
+
     hoje = timezone.now().date()
-    data_inicio = request.GET.get('data_inicio', hoje.strftime('%Y-%m-%d'))
-    data_fim = request.GET.get('data_fim', hoje.strftime('%Y-%m-%d'))
+
+    data_inicio = request.GET.get(
+        'data_inicio',
+        hoje.strftime('%Y-%m-%d')
+    )
+
+    data_fim = request.GET.get(
+        'data_fim',
+        hoje.strftime('%Y-%m-%d')
+    )
+
     filtro_rapido = request.GET.get('filtro')
+
     if filtro_rapido == 'mes':
         data_inicio = hoje.replace(day=1).strftime('%Y-%m-%d')
         data_fim = hoje.strftime('%Y-%m-%d')
+
     movimentacoes = Movimentacao.objects.filter(
         data_movimentacao__date__range=[data_inicio, data_fim],
         tipo='SAIDA'
-    ).order_by('-data_movimentacao')
-    total_itens = movimentacoes.aggregate(Sum('quantidade_movimentada'))['quantidade_movimentada__sum'] or 0
+    ).select_related('peca').order_by('-data_movimentacao')
+
+    # Total de peças usadas
+    total_itens = movimentacoes.aggregate(
+        total=Sum('quantidade_movimentada')
+    )['total'] or 0
+
+    # Calcula os valores individualmente
+    total_valor = 0
+    total_vendas = 0
+
+    for mov in movimentacoes:
+
+        # Preço de compra da peça
+        preco_compra = mov.peca.preco_compra
+
+        # Preço de venda da peça
+        mov.valor_venda_total = (
+            (mov.preco_venda_no_momento or mov.peca.preco_venda) *
+            mov.quantidade_movimentada
+        )
+
+        # Total de compra
+        mov.valor_total = (
+            preco_compra *
+            mov.quantidade_movimentada
+        )
+
+        # Total de venda
+        mov.valor_venda_total = (
+            (mov.preco_venda_no_momento or mov.peca.preco_venda) *
+            mov.quantidade_movimentada
+        )
+
+        # Soma dos totais
+        total_valor += mov.valor_total
+        total_vendas += mov.valor_venda_total
+
     contexto = {
         'titulo': 'Relatório de Saídas',
         'movimentacoes': movimentacoes,
         'total_itens': total_itens,
+        'total_valor': total_valor,
+        'total_vendas': total_vendas,
         'data_inicio': data_inicio,
-        'data_fim': data_fim
+        'data_fim': data_fim,
     }
-    return render(request, 'estoque/relatorio.html', contexto)
+
+    return render(
+        request,
+        'estoque/relatorio.html',
+        contexto
+    )
+    

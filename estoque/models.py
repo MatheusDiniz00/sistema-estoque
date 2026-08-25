@@ -39,7 +39,6 @@ class Peca(models.Model):
     class Meta:
         verbose_name = "Peça"
         verbose_name_plural = "Peças"
-        unique_together = ['nome', 'modelo_celular']
     
     def __str__(self):
         return f"{self.nome} ({self.modelo_celular})"
@@ -50,6 +49,10 @@ class Movimentacao(models.Model):
         ('SAIDA', 'Saída (Venda/Uso em Serviço)'),
     )
     
+    preco_venda_no_momento = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+        
     peca = models.ForeignKey(Peca, on_delete=models.CASCADE)
     fornecedor = models.ForeignKey(Fornecedor, on_delete=models.SET_NULL, null=True, blank=True)
     

@@ -52,26 +52,45 @@ class PecaForm(forms.ModelForm):
             'preco_venda': forms.NumberInput(attrs={'class': 'form-input', 'step': '0.01'}),
         }
 
+class PecaSelectWidget(forms.Select):
+    def __init__(self, *args, precos_por_peca=None, **kwargs):
+        self.precos_por_peca = precos_por_peca or {}
+        super().__init__(*args, **kwargs)
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        pk = value.value if hasattr(value, 'value') else value
+        precos = self.precos_por_peca.get(pk)
+        if precos:
+            option['attrs']['data-preco-compra'] = str(precos['preco_compra'])
+            option['attrs']['data-preco-venda'] = str(precos['preco_venda'])
+        return option
+
+
 class MovimentacaoForm(forms.ModelForm):
     class Meta:
         model = Movimentacao
-        fields = ['peca', 'tipo', 'quantidade_movimentada', 'fornecedor', 'observacao']
+        fields = [
+            'peca', 'tipo', 'quantidade_movimentada',
+            'fornecedor', 'observacao', 'preco_venda_no_momento',
+        ]
         widgets = {
-            'peca': forms.Select(attrs={
-                'class': 'select2 form-select'
-            }),
-            'tipo': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'quantidade_movimentada': forms.NumberInput(attrs={
-                'class': 'form-input',
-                'min': 1
-            }),
-            'fornecedor': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'observacao': forms.Textarea(attrs={
-                'class': 'form-textarea',
-                'rows': 3
+            'peca': PecaSelectWidget(attrs={'class': 'select2 form-select'}),
+            'tipo': forms.Select(attrs={'class': 'form-select'}),
+            'quantidade_movimentada': forms.NumberInput(attrs={'class': 'form-input', 'min': 1}),
+            'fornecedor': forms.Select(attrs={'class': 'form-select'}),
+            'observacao': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3}),
+            'preco_venda_no_momento': forms.NumberInput(attrs={
+                'class': 'form-input', 'step': '0.01',
             }),
         }
+        labels = {'preco_venda_no_momento': 'Preço de Venda'}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        precos = {
+            p['id']: {'preco_compra': p['preco_compra'], 'preco_venda': p['preco_venda']}
+            for p in Peca.objects.values('id', 'preco_compra', 'preco_venda')
+        }
+        self.fields['peca'].widget.precos_por_peca = precos
+        self.fields['preco_venda_no_momento'].required = False

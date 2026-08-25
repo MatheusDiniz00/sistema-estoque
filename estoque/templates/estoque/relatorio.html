@@ -46,15 +46,30 @@
         </div>
 
         <!-- Card de Totais -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-white p-4 rounded-lg border-l-4 border-indigo-500 shadow-sm">
-                <p class="text-indigo-700 font-bold uppercase text-xs">Total de Peças Usadas (Período)</p>
+                <p class="text-indigo-700 font-bold uppercase text-xs">Total de Peças Usadas</p>
                 <p class="text-2xl font-bold text-indigo-900">{{ total_itens }} unidades</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg border-l-4 border-red-500 shadow-sm">
+                <p class="text-red-700 font-bold uppercase text-xs">Custo Total (Compra)</p>
+                <p class="text-2xl font-bold text-red-900">R$ {{ total_valor|floatformat:2 }}</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg border-l-4 border-green-500 shadow-sm">
+                <p class="text-green-700 font-bold uppercase text-xs">Total de Vendas</p>
+                <p class="text-2xl font-bold text-green-900">R$ {{ total_vendas|floatformat:2 }}</p>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
+                <p class="text-blue-700 font-bold uppercase text-xs">Lucro do Período</p>
+                <p class="text-2xl font-bold text-blue-900">R$ {{ total_lucro|floatformat:2 }}</p>
             </div>
         </div>
 
         <!-- Tabela de Movimentações -->
-        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -63,6 +78,10 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Modelo do Celular</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoria</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantidade</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Preço Compra</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Compra</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Preço Venda</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Venda</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Observação</th>
                     </tr>
                 </thead>
@@ -84,18 +103,55 @@
                             <td class="px-6 py-4 text-sm text-red-600 font-bold">
                                 -{{ mov.quantidade_movimentada }}
                             </td>
+                            <td class="px-6 py-4 text-sm text-gray-800">
+                                R$ {{ mov.peca.preco_compra|floatformat:2 }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-red-600 font-bold">
+                                R$ {{ mov.valor_total|floatformat:2 }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-800">
+                                R$ {{ mov.preco_venda_no_momento|default:mov.peca.preco_venda|floatformat:2 }}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-green-600 font-bold">
+                                R$ {{ mov.valor_venda_total|floatformat:2 }}
+                            </td>
                             <td class="px-6 py-4 text-sm text-gray-500 italic">
                                 {{ mov.observacao|default:"-" }}
                             </td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-gray-500 italic">
+                            <td colspan="10" class="px-6 py-12 text-center text-gray-500 italic">
                                 Nenhuma saída registrada neste período.
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
+                <tfoot class="bg-gray-50 border-t-2 border-gray-300">
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-right font-bold text-gray-700">
+                            TOTAL DO PERÍODO:
+                        </td>
+
+                        <td class="px-6 py-4 font-bold text-indigo-700">
+                            {{ total_itens }} unidades
+                        </td>
+
+                        <td></td>
+
+                        <td class="px-6 py-4 font-bold text-red-900">
+                            R$ {{ total_valor|floatformat:2 }}
+                        </td>
+
+                        <td></td>
+
+                        <td class="px-6 py-4 font-bold text-green-900 text-lg">
+                            R$ {{ total_vendas|floatformat:2 }}
+                        </td>
+
+                        <td></td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
         

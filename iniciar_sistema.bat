@@ -8,7 +8,7 @@ echo Por favor, NAO FECHE esta janela enquanto usar o sistema.
 echo Para sair, basta fechar esta janela.
 
 :: 1. Navega para a pasta do projeto (Caminho que você mandou nos prints)
-cd /d "c:\Users\conse\OneDrive\Documents\SistemaEstoque"
+cd /d "C:\Users\caueg\Documents\Sistema Conserta\sistema-estoque"
 
 :: 2. Ativa o ambiente virtual
 call venv\Scripts\activate

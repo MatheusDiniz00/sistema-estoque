@@ -127,6 +127,22 @@
                         {{ form.tipo }}
                     </div>
 
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Preço de Compra
+                        </label>
+                        <input type="text" id="id_preco_compra_display"
+                               class="form-input bg-gray-100 text-gray-600"
+                               readonly>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Preço de Venda
+                        </label>
+                        {{ form.preco_venda_no_momento }}
+                    </div>
+
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             Quantidade
@@ -174,7 +190,27 @@
                 allowClear: true,
                 width: '100%'
             });
+
+            atualizarPrecos();
         });
+
+        function atualizarPrecos() {
+            const selected = $('#id_peca').find('option:selected');
+            const precoCompra = selected.data('preco-compra');
+            const precoVenda = selected.data('preco-venda');
+
+            $('#id_preco_compra_display').val(
+                precoCompra !== undefined ? 'R$ ' + precoCompra : ''
+            );
+
+            // só sobrescreve o campo de venda se ele estiver vazio
+            // (evita apagar um valor que você já digitou manualmente)
+            if (precoVenda !== undefined && !$('#id_preco_venda_no_momento').val()) {
+                $('#id_preco_venda_no_momento').val(precoVenda);
+            }
+        }
+
+        $('#id_peca').on('change', atualizarPrecos);
     </script>
 
 </body>
