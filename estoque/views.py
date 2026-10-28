@@ -9,6 +9,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.db.models import Case, When, Value, IntegerField
+from django.http import HttpResponseRedirect
+from django.urls import reverse
+from django.utils.http import urlencode
+from django.views.decorators.http import require_POST
 
 # --- Gestão de Usuários ---
 @login_required
@@ -329,6 +333,39 @@ def movimentar_estoque(request):
 
     contexto = {'titulo': 'Movimentação de Estoque', 'form': form}
     return render(request, 'estoque/movimentar_peca.html', contexto)
+
+
+@login_required
+@require_POST
+@transaction.atomic
+def desfazer_movimentacao(request, pk):
+    movimentacao = get_object_or_404(
+        Movimentacao.objects.select_for_update(),
+        pk=pk,
+        tipo='SAIDA',
+    )
+    peca = Peca.objects.select_for_update().get(pk=movimentacao.peca_id)
+    peca.quantidade += movimentacao.quantidade_movimentada
+    peca.save(update_fields=['quantidade'])
+
+    quantidade = movimentacao.quantidade_movimentada
+    nome_peca = peca.nome
+    movimentacao.delete()
+    messages.success(
+        request,
+        f'Movimentação desfeita: {quantidade}x de {nome_peca} retornaram ao estoque.',
+    )
+
+    filtros = {
+        chave: request.POST[chave]
+        for chave in ('data_inicio', 'data_fim')
+        if request.POST.get(chave)
+    }
+    url_relatorio = reverse('relatorio')
+    if filtros:
+        url_relatorio = f'{url_relatorio}?{urlencode(filtros)}'
+    return HttpResponseRedirect(url_relatorio)
+
 
 @login_required
 def relatorio_movimentacoes(request):
